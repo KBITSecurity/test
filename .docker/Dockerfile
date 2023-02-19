@@ -1,10 +1,10 @@
 ## Build stage
 FROM golang:1.17-bullseye as build
 WORKDIR /go/src/app
-ADD ./src/ /go/src/app
+COPY ./src/ /go/src/app
 
-RUN go get -d -v ./...
-RUN go build -o /go/bin/app
+RUN go get -d -v ./... && \
+    go build -o /go/bin/app
 
 
 ## Development evironment
