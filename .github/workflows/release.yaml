@@ -1,0 +1,61 @@
+---
+name: Build and publish
+
+on:
+  push:
+    tags: '*'
+
+env:
+  REGISTRY: ghcr.io
+  DO_REGISTRY: registry.digitalocean.com/mine-k8s-repo/example
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permission:
+      contents: read
+        
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to the container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3.6.2
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s --alias k8s --set-current-context
+
+      - name: Login to DigitalOcean registry
+        run: doctl registry login
+
+      - name: Build and push DOcker image
+        uses: docker/build-push-action@2.10.0
+        with:
+          context: .
+          file: ./.docker/Dockerfile
+          target: "production"
+          push: true
+          tags: "${{ env.DO_REGISTRY }}:${{ steps.meta.outputs.version }}"
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Deploy
+        uses: WyriHaximus/github-action-helm3@v2
+        with:
+          exec: helm upgrade example .helm/ --install --create-namespace --namespace dev --wait --atomic --set image.tag=${{ steps.meta.outputs.version }} --set image.repository=${{ env.DO_REGISTRY }} --set imagePulSecrets[0].name="mime-k8s-repo"
+          kubeconfig: '${{ secrets.KUBECONFIG }}'
