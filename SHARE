@@ -1,0 +1,59 @@
+from sklearn.datasets import make_circles
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+
+
+print("Preparing data...")
+first_X, first_y = make_circles()
+second_X, second_y = make_moons()
+
+print("Loading classifiers...")
+first_clf = DecisionTreeClassifier()
+first_clf2 = DecisionTreeClassifier()
+second_clf = LogisticRegression()
+second_clf2 = LogisticRegression()
+
+print("Preparing data to learning...")
+first_X_train, first_X_test, first_y_train, first_y_test= train_test_split(first_X, first_y, test_size=0.2)
+second_X_train, second_X_test, second_y_train, second_y_test = train_test_split(second_X, second_y, test_size=0.2)
+
+
+print("fitting - training...")
+first_clf.fit(first_X_train, first_y_train)
+first_clf2.fit(second_X_train, second_y_train)
+second_clf.fit(first_X_train, first_y_train)
+second_clf2.fit(second_X_train, second_y_train)
+
+
+print("Predicting...")
+first_clf_pred = first_clf.predict(first_X_test)
+first_clf2_pred = first_clf2.predict(second_X_test)
+second_clf_pred = second_clf.predict(first_X_test)
+second_clf2_pred = second_clf2.predict(second_X_test)
+
+print("Result predicting:")
+print("*"*30)
+print("true values ", first_y[:10])
+print("predicted 1 ", first_clf_pred[:10])
+print("predicted 2 ", second_clf_pred[:10])
+print("*"*30)
+print("true values ", second_y[:10])
+print("predicted 1 ", first_clf2_pred[:10])
+print("predicted 2 ", second_clf2_pred[:10])
+print("*"*30)
+
+print("scroing...")
+first_clf_score = first_clf.score(first_X_train, first_y_train)
+first_clf2_score = first_clf2.score(second_X_train, second_y_train)
+second_clf_score = second_clf.score(first_X_train, first_y_train)
+second_clf2_score = second_clf2.score(second_X_train, second_y_train)
+
+print("Train score 1 = ", first_clf_score)
+print("Train score 2 = ", first_clf2_score)
+print("Train score 3 = ", second_clf_score)
+print("Train score 4 = ", second_clf2_score)
+
+
+
